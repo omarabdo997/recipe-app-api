@@ -11,7 +11,7 @@ class UserAdmin(BaseUserAdmin):
         (_('Personal info'), {'fields': ('name',)}),
         (
             _('Permissions'),
-            {'fields': ('is_active', 'is_staff', 'is_superuser')}
+            {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}
         ),
         (_('Important dates'), {'fields': ('last_login',)}),
     )
@@ -22,4 +22,4 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
 
-admin.site.register(models.User, UserAdmin)    
+admin.site.register(models.User, UserAdmin)
