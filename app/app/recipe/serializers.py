@@ -1,22 +1,38 @@
 from rest_framework import serializers
 from recipe import models
 
-class TagSerializer(serializers.ModelSerializer):
-    user = serializers.CharField(read_only=True)
-    name = serializers.CharField(required=False)
+
+class BaseSerializer(serializers.ModelSerializer):
+    model = None
 
     class Meta:
-        model = models.Tag
-        fields = '__all__'
-        
-
-    def create(self, validated_data):        
-        return models.Tag.objects.create(
-            name = validated_data.get('name',""),
-            user = self.context['request'].user
+        abstract = True
+    
+    user = serializers.CharField(read_only=True)
+    
+    def create(self, validated_data):
+        return self.model.objects.create(
+            name = validated_data.get('name'),
+            user = self.context.get('request').user
         )
-        
+
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name')
         instance.save()
         return instance    
+
+
+class TagSerializer(BaseSerializer):
+    model = models.Tag
+
+    class Meta:
+        model = models.Tag
+        fields = '__all__'
+
+
+class IngredientSerializer(BaseSerializer):
+    model = models.Ingredient
+
+    class Meta:
+        model = models.Ingredient
+        fields = '__all__'

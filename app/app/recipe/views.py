@@ -7,21 +7,50 @@ from rest_framework.parsers import JSONParser
 from django.shortcuts import get_object_or_404
 
 
-# Create your views here.
-
-class ListTags(generics.ListCreateAPIView):
+class BaseListCreateAPIView(generics.ListCreateAPIView):
+    model = None
+    serializer_class = None
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = serializers.TagSerializer
+    
     
     def get_queryset(self):
-        return models.Tag.objects.filter(user=self.request.user).order_by('-name')
+        return self.model.objects.filter(user=self.request.user).order_by('-name')
 
-class CreateTag(generics.RetrieveUpdateDestroyAPIView):
+    class Meta:
+        abstract = True
+
+
+class BaseManageAPIView(generics.RetrieveUpdateDestroyAPIView):
+    model = None
+    serializer_class = None
     authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class = serializers.TagSerializer
 
     def get_object(self):
-        return get_object_or_404(models.Tag, pk=self.kwargs['pk'])       
+        return get_object_or_404(self.model, pk=self.kwargs['pk'])
+
+
+class ListTags(BaseListCreateAPIView):
+    model = models.Tag
+    serializer_class = serializers.TagSerializer
+    
+
+class ManageTag(BaseManageAPIView):
+    model = models.Tag
+    serializer_class = serializers.TagSerializer
+
+
+class ListIngredients(BaseListCreateAPIView):
+    model = models.Ingredient
+    serializer_class = serializers.IngredientSerializer
+
+
+class ManageIngredient(BaseManageAPIView):
+    model = models.Ingredient
+    serializer_class = serializers.IngredientSerializer
+
+    
+
+
 
