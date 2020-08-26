@@ -8,17 +8,14 @@ class BaseSerializer(serializers.ModelSerializer):
     class Meta:
         abstract = True
     
-    user = serializers.CharField(read_only=True)
-    
     def create(self, validated_data):
-        return self.model.objects.create(
-            name = validated_data.get('name'),
-            user = self.context.get('request').user
-        )
+        data_object = self.model(**validated_data)
+        data_object.user = self.context.get('request').user
+        data_object.save()
+        return data_object
 
     def update(self, instance, validated_data):
-        instance.name = validated_data.get('name')
-        instance.save()
+        instance = super().update(instance, validated_data)
         return instance    
 
 
@@ -28,6 +25,7 @@ class TagSerializer(BaseSerializer):
     class Meta:
         model = models.Tag
         fields = '__all__'
+        read_only_fields = ('user',)
 
 
 class IngredientSerializer(BaseSerializer):
@@ -36,3 +34,47 @@ class IngredientSerializer(BaseSerializer):
     class Meta:
         model = models.Ingredient
         fields = '__all__'
+        read_only_fields = ('user',)
+
+
+class RecipeCreateUpdateSerializer(BaseSerializer):
+    model = models.Recipe
+    
+
+    class Meta:
+        model = models.Recipe
+        fields = '__all__'
+        read_only_fields = ('user', )
+
+
+    def create(self, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        recipe = super().create(validated_data)
+        recipe.ingredients.set(ingredients)
+        recipe.tags.set(tags)
+        return recipe
+
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredients', None)
+        tags = validated_data.pop('tags', None)
+        instance = super().update(instance, validated_data)
+        if ingredients:
+            instance.ingredients.set(ingredients)
+        if tags:    
+            instance.tags.set(tags)
+        return instance
+
+
+
+
+
+class RecipeSerializer(RecipeCreateUpdateSerializer):
+    model = models.Recipe
+    ingredients = IngredientSerializer(many=True)
+    tags = TagSerializer(many=True)
+
+    class Meta:
+        model = models.Recipe
+        fields = '__all__'
+        read_only_fields = ('user', )  
